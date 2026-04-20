@@ -16,9 +16,17 @@ export interface SceneParams {
   bloomIntensity: number
   chromaticOffset: number
   starDensity: number
+  photonRingIntensity: number
+  diskLensing: number
+  grainIntensity: number
   onProximity?: (normalizedDist: number) => void
   onTraversalEnd?: () => void
 }
+
+// Disk inner/outer radii derived from the torus geometry in AccretionDisk.
+// Kept here so the lensing shader and the disk mesh agree on boundaries.
+const DISK_INNER_MUL = 1.05
+const DISK_OUTER = 2.1
 
 // Lives inside <Canvas> so it can touch the camera and call useFrame.
 function CameraRig({
@@ -67,6 +75,9 @@ export default function WormholeScene(props: SceneParams) {
     bloomIntensity,
     chromaticOffset,
     starDensity,
+    photonRingIntensity,
+    diskLensing,
+    grainIntensity,
     onProximity,
     onTraversalEnd,
   } = props
@@ -95,6 +106,11 @@ export default function WormholeScene(props: SceneParams) {
         throatRadius={throatRadius}
         lensingStrength={lensingStrength}
         starDensity={starDensity}
+        photonRingIntensity={photonRingIntensity}
+        diskLensing={diskLensing}
+        diskInner={throatRadius * DISK_INNER_MUL}
+        diskOuter={DISK_OUTER}
+        accretionSpeed={accretionSpeed}
       />
       <AccretionDisk throatRadius={throatRadius} accretionSpeed={accretionSpeed} />
       <TunnelMesh throatRadius={throatRadius} traversalMode={traversalMode} />
@@ -117,7 +133,11 @@ export default function WormholeScene(props: SceneParams) {
         />
       )}
 
-      <PostFX bloomIntensity={bloomIntensity} chromaticOffset={chromaticOffset} />
+      <PostFX
+        bloomIntensity={bloomIntensity}
+        chromaticOffset={chromaticOffset}
+        grainIntensity={grainIntensity}
+      />
     </Canvas>
   )
 }

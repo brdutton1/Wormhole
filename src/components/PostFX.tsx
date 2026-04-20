@@ -1,10 +1,15 @@
-import { EffectComposer, Bloom, ChromaticAberration, Vignette } from '@react-three/postprocessing'
+import { EffectComposer, Bloom, ChromaticAberration, Vignette, Noise } from '@react-three/postprocessing'
 import { BlendFunction } from 'postprocessing'
 import { Vector2 } from 'three'
 
-export default function PostFX({ bloomIntensity = 1.5, chromaticOffset = 0.0015 }: {
+export default function PostFX({
+  bloomIntensity = 1.5,
+  chromaticOffset = 0.0015,
+  grainIntensity = 0.08,
+}: {
   bloomIntensity?: number
   chromaticOffset?: number
+  grainIntensity?: number
 }) {
   return (
     <EffectComposer multisampling={0}>
@@ -21,6 +26,11 @@ export default function PostFX({ bloomIntensity = 1.5, chromaticOffset = 0.0015 
         modulationOffset={0}
       />
       <Vignette eskil={false} offset={0.3} darkness={0.8} />
+      <Noise
+        premultiply
+        blendFunction={BlendFunction.SOFT_LIGHT}
+        opacity={grainIntensity}
+      />
     </EffectComposer>
   )
 }

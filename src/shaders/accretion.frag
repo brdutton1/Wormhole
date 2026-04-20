@@ -100,6 +100,16 @@ void main() {
   color.b *= 1.0 + doppler;       // approaching → more blue
   color.r *= 1.0 - doppler * 0.6; // receding → more red
 
+  // Gravitational redshift: (1+z) = 1/sqrt(1 - rs/r). Inner edge of the
+  // disk is deeper in the potential well → wavelength stretches toward red.
+  // Capped so the innermost ring doesn't go opaque black.
+  float rs = uThroatRadius * 2.0;
+  float z = 1.0 / sqrt(max(1.0 - rs / max(r, rs + 0.01), 0.05)) - 1.0;
+  z = clamp(z, 0.0, 2.0);
+  color.r *= 1.0 + 0.6 * z;
+  color.g *= 1.0 - 0.2 * z;
+  color.b *= 1.0 - 0.5 * z;
+
   // Soft inner and outer cutoff so the disk doesn't clip hard against
   // the torus geometry.
   float innerFade = smoothstep(0.0, 0.08, rNorm);

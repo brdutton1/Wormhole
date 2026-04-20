@@ -15,8 +15,11 @@ export default function App() {
     Tuning: folder(
       {
         starDensity: { value: 0.5, min: 0.0, max: 1.0, step: 0.01 },
-        bloomIntensity: { value: 1.5, min: 0.0, max: 4.0, step: 0.01 },
+        photonRingIntensity: { value: 1.4, min: 0.0, max: 3.0, step: 0.01 },
+        diskLensing: { value: 0.9, min: 0.0, max: 1.0, step: 0.01 },
+        bloomIntensity: { value: 1.8, min: 0.0, max: 4.0, step: 0.01 },
         chromaticOffset: { value: 0.0015, min: 0.0, max: 0.01, step: 0.0001 },
+        grainIntensity: { value: 0.08, min: 0.0, max: 0.3, step: 0.005 },
       },
       { collapsed: true },
     ),
@@ -64,6 +67,9 @@ export default function App() {
       bloomIntensity={values.bloomIntensity}
       chromaticOffset={values.chromaticOffset}
       starDensity={values.starDensity}
+      photonRingIntensity={values.photonRingIntensity}
+      diskLensing={values.diskLensing}
+      grainIntensity={values.grainIntensity}
       onProximity={onProximity}
       onTraversalEnd={onTraversalEnd}
     />

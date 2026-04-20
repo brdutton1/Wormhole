@@ -8,9 +8,23 @@ interface Props {
   throatRadius: number
   lensingStrength: number
   starDensity: number
+  photonRingIntensity: number
+  diskLensing: number
+  diskInner: number
+  diskOuter: number
+  accretionSpeed: number
 }
 
-export default function StarField({ throatRadius, lensingStrength, starDensity }: Props) {
+export default function StarField({
+  throatRadius,
+  lensingStrength,
+  starDensity,
+  photonRingIntensity,
+  diskLensing,
+  diskInner,
+  diskOuter,
+  accretionSpeed,
+}: Props) {
   const matRef = useRef<THREE.ShaderMaterial>(null)
   const { size } = useThree()
 
@@ -22,8 +36,12 @@ export default function StarField({ throatRadius, lensingStrength, starDensity }
       uLensingStrength: { value: lensingStrength },
       uCameraPos: { value: new THREE.Vector3() },
       uStarDensity: { value: starDensity },
+      uPhotonRingIntensity: { value: photonRingIntensity },
+      uDiskLensing: { value: diskLensing },
+      uDiskInner: { value: diskInner },
+      uDiskOuter: { value: diskOuter },
+      uAccretionSpeed: { value: accretionSpeed },
     }),
-    // Uniforms object is built once; values update below via refs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   )
@@ -35,6 +53,11 @@ export default function StarField({ throatRadius, lensingStrength, starDensity }
     u.uThroatRadius.value = throatRadius
     u.uLensingStrength.value = lensingStrength
     u.uStarDensity.value = starDensity
+    u.uPhotonRingIntensity.value = photonRingIntensity
+    u.uDiskLensing.value = diskLensing
+    u.uDiskInner.value = diskInner
+    u.uDiskOuter.value = diskOuter
+    u.uAccretionSpeed.value = accretionSpeed
     u.uResolution.value.set(size.width, size.height)
     u.uCameraPos.value.copy(camera.position)
   })
