@@ -32,11 +32,11 @@ export default function AccretionDisk({ throatRadius, accretionSpeed }: Props) {
     u.uCameraPos.value.copy(camera.position)
   })
 
+  // Flat annulus tilted slightly so we see its face, not its edge. A
+  // small tilt (~12°) gives a classic elliptical disk silhouette.
   return (
-    <mesh rotation={[Math.PI / 2, 0, 0]}>
-      {/* Torus(majorR, minorR, radialSeg, tubularSeg). Flat-ish disk via
-          small minor radius; tubularSeg high for smooth ring. */}
-      <torusGeometry args={[1.5, 0.6, 2, 128]} />
+    <mesh rotation={[Math.PI / 2 - 0.21, 0, 0]}>
+      <ringGeometry args={[throatRadius * 1.05, 2.1, 256, 1]} />
       <shaderMaterial
         ref={matRef}
         vertexShader={vertexShader}

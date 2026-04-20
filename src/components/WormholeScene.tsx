@@ -92,15 +92,15 @@ export default function WormholeScene(props: SceneParams) {
     <Canvas
       dpr={[1, 1.5]}
       gl={{ powerPreference: 'high-performance', antialias: false }}
-      camera={{ position: [0, 1.2, 8], fov: 55, near: 0.1, far: 2000 }}
+      camera={{ position: [0, 2.2, 12], fov: 48, near: 0.1, far: 2000 }}
       style={{ position: 'fixed', inset: 0, background: '#000' }}
     >
       <color attach="background" args={['#000']} />
-      <fog attach="fog" args={['#000', 12, 60]} />
+      {/* No fog — starfield is at r=1000 and we want it crisp. */}
 
-      {/* Scene lights — subtle rim/ambient; the disk provides most light. */}
+      {/* Scene lights — subtle ambient; disk is additive + self-emitting. */}
       <ambientLight intensity={0.05} />
-      <pointLight position={[0, 0, 0]} intensity={2} distance={10} color={new THREE.Color('#ffb16a')} />
+      <pointLight position={[0, 0, 0]} intensity={1.2} distance={10} color={new THREE.Color('#ffb16a')} />
 
       <StarField
         throatRadius={throatRadius}
@@ -125,11 +125,12 @@ export default function WormholeScene(props: SceneParams) {
         <OrbitControls
           key={orbitKey}
           autoRotate
-          autoRotateSpeed={0.2}
+          autoRotateSpeed={0.15}
           enableDamping
           enablePan={false}
-          minDistance={3}
-          maxDistance={20}
+          minDistance={4}
+          maxDistance={30}
+          target={[0, 0, 0]}
         />
       )}
 
