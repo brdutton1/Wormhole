@@ -34,7 +34,8 @@ const DISK_OUTER = 2.1
 
 // Scene anchors per phase.
 const APPROACH_CAM: [number, number, number] = [6, 2.2, 16]
-const MERCURY_POS: [number, number, number] = [-3.5, -0.2, 4]
+const ICE_POS: [number, number, number] = [-4.2, -0.3, 4.5]
+const ICE_RADIUS = 1.1
 const ARRIVAL_CAM: [number, number, number] = [0, 2, -18]
 const ARRIVAL_LOOK: [number, number, number] = [5, -0.4, -24]
 const ALIEN_POS: [number, number, number] = [5, -0.4, -24]
@@ -42,8 +43,10 @@ const ALIEN_RADIUS = 2.4
 const HOST_STAR_POS: [number, number, number] = [26, 11, -28]
 
 // Consistent sun directions per system.
-const MERCURY_SUN_DIR: [number, number, number] = [1, 0.25, 0.5] // toward the inner sun
-const MERCURY_SUN_COLOR: [number, number, number] = [1.0, 0.95, 0.85]
+// Home system: distant cool G-class — light comes from behind/above-right
+// of the ice world so we see a crescent and it's not blown out.
+const ICE_SUN_DIR: [number, number, number] = [0.8, 0.35, -0.2]
+const ICE_SUN_COLOR: [number, number, number] = [1.0, 0.97, 0.88]
 const ALIEN_SUN_COLOR: [number, number, number] = [0.85, 0.92, 1.2] // A-class blue-white
 
 function CameraRig({
@@ -165,15 +168,15 @@ export default function WormholeScene(props: SceneParams) {
         traversalMode={phase === 'traversal' || traversalMode}
       />
 
-      {/* Mercury only visible during approach — it's on the home side. */}
+      {/* Ice world of departure — visible during approach only. */}
       {phase === 'approach' && (
         <Planet
-          preset="mercury"
-          position={MERCURY_POS}
-          radius={0.9}
-          sunDir={MERCURY_SUN_DIR}
-          sunColor={MERCURY_SUN_COLOR}
-          rotationSpeed={0.04}
+          preset="ice"
+          position={ICE_POS}
+          radius={ICE_RADIUS}
+          sunDir={ICE_SUN_DIR}
+          sunColor={ICE_SUN_COLOR}
+          rotationSpeed={0.03}
         />
       )}
 

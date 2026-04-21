@@ -15,8 +15,8 @@ export default function PostFX({
     <EffectComposer multisampling={0}>
       <Bloom
         intensity={bloomIntensity}
-        luminanceThreshold={0.2}
-        luminanceSmoothing={0.2}
+        luminanceThreshold={0.55}
+        luminanceSmoothing={0.1}
         mipmapBlur
       />
       <ChromaticAberration

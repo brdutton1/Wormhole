@@ -55,9 +55,10 @@ export default function ExplorerHUD({
       {!hudDismissed && phase === 'approach' && (
         <div className="hud-bottom hud-amber">
           <p className="hud-flavor">
-            Drifting 0.31 AU sunward of Mercury. Stabilized Kerr transit corridor
-            detected ahead. Gravitational lensing consistent with ~1 solar-mass
-            singularity, reinforced against tidal collapse.
+            Station Kryos-III, departure point. Frozen surface,
+            subsurface ocean, minimal atmosphere. Stabilized Kerr transit
+            corridor detected 4.1 Mm ahead — gravitational lensing consistent
+            with ~1 solar-mass singularity, reinforced against tidal collapse.
           </p>
           <p className="hud-flavor hud-dim">
             Destination: unknown. In it to win it.

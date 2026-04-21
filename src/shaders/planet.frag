@@ -1,26 +1,27 @@
 // ----------------------------------------------------------------------------
 // planet.frag — procedural planet surface shader.
 //
-// Two presets:
-//   0 = Mercury. Dark brown-gray, geometric albedo ~0.14, patchy
-//       highlands/plains contrast (stand-ins for Caloris/Rachmaninoff),
-//       Worley-based crater darkening. NO blue tint — real Mercury is
-//       boring brown-gray and painting it silver is the tell of a fake.
-//   1 = Dark ringed world. Near-black rocky base, faint violet ambient,
-//       sharp hot rim light on the sun-facing edge (Fresnel-ish).
+// Presets:
+//   0 = Ice world with crack lineae (Europa / Enceladus inspired).
+//       Bright blue-white surface, dark crack network via Worley F2-F1
+//       cell-edge distance, subtle cyan subsurface scattering, aurora
+//       hint near poles.
+//   1 = Dark ringed rocky world. Near-black base, sharp hot rim light.
 //
 // Physics-adjacent:
 //   * Lambertian diffuse term max(0, dot(N, sunDir)).
 //   * Soft ambient term so the dark hemisphere doesn't crush to pure 0.
 //   * Rim lighting via pow(1 - dot(N, V), 4) — cheap Fresnel stand-in,
-//     real atmospheres scatter light differently but this reads well.
+//     works well for both ice (high scatter) and dark rock (silhouette).
+//   * For ice, a subsurface term brightens the shadow side slightly —
+//     real ice scatters a lot of blue light internally.
 // ----------------------------------------------------------------------------
 
 precision highp float;
 
 uniform float uTime;
 uniform int   uPreset;
-uniform vec3  uSunDir;        // world-space direction *toward* the star
+uniform vec3  uSunDir;
 uniform vec3  uSunColor;
 uniform vec3  uCameraPos;
 
@@ -61,47 +62,56 @@ float noise3(vec3 p) {
   );
 }
 
-// Worley F1 distance — used for crater centers.
-float worley(vec3 p) {
+// Worley F1 (nearest) and F2 (second-nearest) in one pass. F2-F1 spikes
+// to zero along cell edges → makes a crack network.
+vec2 worleyF1F2(vec3 p) {
   vec3 i = floor(p);
   vec3 f = fract(p);
-  float minD = 1.0;
+  float f1 = 1.0, f2 = 1.0;
   for (int z = -1; z <= 1; z++) {
     for (int y = -1; y <= 1; y++) {
       for (int x = -1; x <= 1; x++) {
         vec3 c = vec3(float(x), float(y), float(z));
         vec3 pt = c + hash33(i + c);
-        minD = min(minD, length(f - pt));
+        float d = length(f - pt);
+        if (d < f1) { f2 = f1; f1 = d; }
+        else if (d < f2) { f2 = d; }
       }
     }
   }
-  return minD;
+  return vec2(f1, f2);
 }
 
-// --------- Mercury ---------
-vec3 mercurySurface(vec3 n) {
-  // Sample noise in normal-space so bands wrap around the sphere.
-  vec3 p = n * 2.2;
+// --------- Ice world ---------
+vec3 iceSurface(vec3 n) {
+  // Sample in normal space so bands wrap properly.
+  vec3 p = n * 2.0;
 
-  // Large-scale "mare" variation: Caloris ejecta (lighter) vs Rachmaninoff
-  // plains (darker). Mix along a low-frequency 3D noise.
-  float mare = smoothstep(0.35, 0.65, noise3(p * 0.9));
-  vec3 highlands = vec3(0.35, 0.32, 0.29); // Caloris ejecta
-  vec3 plains    = vec3(0.22, 0.20, 0.18); // darker mare
-  vec3 base = mix(plains, highlands, mare);
+  // Base albedo: high (bright icy surface).
+  vec3 iceWhite   = vec3(0.88, 0.93, 0.98);
+  vec3 iceShadow  = vec3(0.60, 0.72, 0.88); // subsurface cyan
 
-  // Mid-frequency "grain" for visual interest.
-  float grain = noise3(p * 6.0) * 0.08;
-  base += grain - 0.04;
+  // Macro variation: large "plate" regions.
+  float plates = smoothstep(0.35, 0.65, noise3(p * 0.7));
+  vec3 base = mix(iceShadow, iceWhite, plates);
 
-  // Craters: two Worley octaves; rim highlight around each crater center.
-  float c1 = worley(p * 5.0);
-  float c2 = worley(p * 11.0);
-  float craterDepth = smoothstep(0.0, 0.12, c1) * 0.35
-                    + smoothstep(0.0, 0.08, c2) * 0.15;
-  float rim = (1.0 - smoothstep(0.08, 0.14, c1)) * 0.25;
-  base *= (1.0 - craterDepth);
-  base += vec3(0.40, 0.34, 0.28) * rim;
+  // Subtle mid-frequency stipple for "frost" texture.
+  float stipple = noise3(p * 14.0) * 0.10;
+  base += (stipple - 0.05);
+
+  // Crack network: TWO octaves of Worley F2-F1.
+  // Big primary lineae (like Europa's Argadnel Linea).
+  vec2 w1 = worleyF1F2(p * 2.8);
+  float cracks1 = 1.0 - smoothstep(0.0, 0.04, w1.y - w1.x);
+  // Finer secondary fractures.
+  vec2 w2 = worleyF1F2(p * 7.0);
+  float cracks2 = (1.0 - smoothstep(0.0, 0.03, w2.y - w2.x)) * 0.55;
+  float cracks = max(cracks1, cracks2);
+
+  // Crack color: dark with a hint of reddish-brown (real Europa linea
+  // tint from sulfur compounds).
+  vec3 crackColor = vec3(0.22, 0.18, 0.28);
+  base = mix(base, crackColor, cracks * 0.75);
 
   return base;
 }
@@ -109,10 +119,9 @@ vec3 mercurySurface(vec3 n) {
 // --------- Dark ringed world ---------
 vec3 darkRockySurface(vec3 n) {
   vec3 p = n * 1.8;
-  // Banded rocky variation — fast vertical-ish streaking.
   float bands = noise3(p * vec3(8.0, 2.5, 8.0));
   float roughness = noise3(p * 14.0);
-  vec3 dark    = vec3(0.06, 0.05, 0.07);
+  vec3 dark     = vec3(0.06, 0.05, 0.07);
   vec3 lessDark = vec3(0.11, 0.09, 0.12);
   vec3 base = mix(dark, lessDark, smoothstep(0.3, 0.7, bands));
   base += vec3(0.03, 0.02, 0.05) * (roughness - 0.5);
@@ -125,32 +134,44 @@ void main() {
   vec3 L = normalize(uSunDir);
 
   vec3 albedo;
+  vec3 ambient;
+  vec3 rimColor;
+  float rimPower = 4.0;
+  float subsurface = 0.0;
+
   if (uPreset == 0) {
-    albedo = mercurySurface(N);
+    albedo = iceSurface(N);
+    ambient = vec3(0.18, 0.22, 0.30); // cool ambient — ice reflects sky
+    rimColor = uSunColor * 0.8;
+    // Subsurface scattering: boost shadow-side brightness slightly with
+    // a cyan tint. Real ice glows from within in dim light.
+    subsurface = 0.4;
   } else {
     albedo = darkRockySurface(N);
+    ambient = vec3(0.025, 0.02, 0.04);
+    rimColor = uSunColor * 0.95; // sharp hot rim on the dark world
   }
 
-  // Lambertian + ambient.
   float ndotl = max(0.0, dot(N, L));
-  vec3 ambient;
-  if (uPreset == 0) {
-    // Mercury ambient: tiny warm bounce off nearby sun (we're "inside" Mercury's orbit).
-    ambient = vec3(0.04, 0.035, 0.03);
-  } else {
-    // Alien ambient: cool violet scattered light.
-    ambient = vec3(0.025, 0.02, 0.04);
-  }
   vec3 diffuse = albedo * (ambient + uSunColor * ndotl);
 
-  // Rim lighting — pow(1 - N·V, 4) cheap Fresnel stand-in. Only on the
-  // sun-facing hemisphere so it reads as actual scattered starlight.
-  float rim = pow(1.0 - max(0.0, dot(N, V)), 4.0);
+  // Subsurface for ice: inverse Lambert term, tinted cyan.
+  if (subsurface > 0.0) {
+    float wrap = max(0.0, dot(N, -L) * 0.5 + 0.3);
+    diffuse += albedo * vec3(0.55, 0.75, 1.0) * wrap * subsurface * 0.35;
+  }
+
+  // Rim light — only on the sun-facing edge (sideLit gate).
+  float rim = pow(1.0 - max(0.0, dot(N, V)), rimPower);
   float sideLit = smoothstep(-0.2, 0.5, dot(N, L));
-  vec3 rimColor = (uPreset == 1)
-    ? uSunColor * 0.9   // sharp hot rim on the dark world
-    : uSunColor * 0.25; // soft warm edge on Mercury
   diffuse += rimColor * rim * sideLit;
+
+  // Aurora hint for ice: ribbon of violet near poles (|N.y| > 0.6), faint.
+  if (uPreset == 0) {
+    float polar = smoothstep(0.6, 0.85, abs(N.y));
+    float shimmer = 0.5 + 0.5 * sin(uTime * 0.8 + N.x * 6.0 + N.z * 4.0);
+    diffuse += vec3(0.45, 0.3, 0.8) * polar * shimmer * 0.12;
+  }
 
   gl_FragColor = vec4(diffuse, 1.0);
 }

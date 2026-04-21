@@ -21,12 +21,12 @@ export default function App() {
     traversalMode: { value: false },
     Tuning: folder(
       {
-        starDensity: { value: 0.6, min: 0.0, max: 1.0, step: 0.01 },
-        photonRingIntensity: { value: 1.9, min: 0.0, max: 3.0, step: 0.01 },
-        diskLensing: { value: 0.85, min: 0.0, max: 1.0, step: 0.01 },
-        bloomIntensity: { value: 2.2, min: 0.0, max: 4.0, step: 0.01 },
-        chromaticOffset: { value: 0.0006, min: 0.0, max: 0.01, step: 0.0001 },
-        grainIntensity: { value: 0.06, min: 0.0, max: 0.3, step: 0.005 },
+        starDensity: { value: 0.55, min: 0.0, max: 1.0, step: 0.01 },
+        photonRingIntensity: { value: 1.6, min: 0.0, max: 3.0, step: 0.01 },
+        diskLensing: { value: 0.8, min: 0.0, max: 1.0, step: 0.01 },
+        bloomIntensity: { value: 1.25, min: 0.0, max: 4.0, step: 0.01 },
+        chromaticOffset: { value: 0.0004, min: 0.0, max: 0.01, step: 0.0001 },
+        grainIntensity: { value: 0.02, min: 0.0, max: 0.3, step: 0.005 },
       },
       { collapsed: true },
     ),

@@ -4,7 +4,7 @@ import * as THREE from 'three'
 import vertexShader from '../shaders/planet.vert?raw'
 import fragmentShader from '../shaders/planet.frag?raw'
 
-export type PlanetPreset = 'mercury' | 'alien'
+export type PlanetPreset = 'ice' | 'alien'
 
 interface Props {
   preset: PlanetPreset
@@ -29,7 +29,7 @@ export default function Planet({
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
-      uPreset: { value: preset === 'mercury' ? 0 : 1 },
+      uPreset: { value: preset === 'ice' ? 0 : 1 },
       uSunDir: { value: new THREE.Vector3(...sunDir).normalize() },
       uSunColor: { value: new THREE.Vector3(...sunColor) },
       uCameraPos: { value: new THREE.Vector3() },
@@ -42,7 +42,7 @@ export default function Planet({
     const u = matRef.current?.uniforms
     if (u) {
       u.uTime.value = clock.elapsedTime
-      u.uPreset.value = preset === 'mercury' ? 0 : 1
+      u.uPreset.value = preset === 'ice' ? 0 : 1
       u.uSunDir.value.set(...sunDir).normalize()
       u.uSunColor.value.set(...sunColor)
       u.uCameraPos.value.copy(camera.position)

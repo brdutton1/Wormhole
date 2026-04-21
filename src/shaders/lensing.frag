@@ -123,20 +123,20 @@ vec3 starLayer(vec3 dir, float cellSize) {
   // Twinkle.
   float tw = 0.8 + 0.2 * sin(uTime * 2.0 + h * 31.4159);
 
-  return temp * star * tw * 4.5; // HDR headroom for bloom.
+  return temp * star * tw * 2.2; // HDR headroom for bloom (toned down from 4.5).
 }
 
 // ---- nebula dust ----
 // Low-frequency 3D noise tinted purple/cyan — sells the void without
-// being obvious.
+// being obvious. Kept subtle so it doesn't create a foggy look.
 vec3 nebula(vec3 dir) {
   float a = noise3(dir * 2.5 + vec3(0.0, uTime * 0.01, 0.0));
   float b = noise3(dir * 6.0 - vec3(uTime * 0.015, 0.0, 0.0));
-  float density = smoothstep(0.45, 0.95, a * 0.7 + b * 0.3);
-  vec3 purple = vec3(0.35, 0.15, 0.55);
-  vec3 cyan   = vec3(0.15, 0.35, 0.55);
+  float density = smoothstep(0.6, 0.98, a * 0.7 + b * 0.3);
+  vec3 purple = vec3(0.28, 0.12, 0.42);
+  vec3 cyan   = vec3(0.10, 0.28, 0.42);
   vec3 tint = mix(purple, cyan, smoothstep(0.3, 0.8, b));
-  return tint * density * 0.35;
+  return tint * density * 0.14; // was 0.35 — cut more than half to defog
 }
 
 // ---- lensed disk sampler ----
@@ -192,7 +192,9 @@ void main() {
   vec3 sampleDir = bent;
   float doppler = 1.0;
   float beta = length(uObserverVel);
-  if (beta > 0.001) {
+  // Gate aberration to meaningful speeds only. Orbit controls autorotate
+  // produces tiny β that used to leak a faint haze everywhere.
+  if (beta > 0.03) {
     beta = min(beta, 0.9);
     vec3 vhat = uObserverVel / max(length(uObserverVel), 1e-5);
     float cosT = dot(bent, vhat);
@@ -218,12 +220,15 @@ void main() {
   color += starLayer(sampleDir, dHigh) * 0.6;
 
   // Relativistic beaming: pile intensity into the forward cone, thin out behind.
-  color *= pow(doppler, 4.0);
+  // Exponent 2 (was 4) keeps the effect real without blowing out the scene
+  // when stationary — doppler=1.0 still returns ~1.0 but numerical drift
+  // doesn't cascade into a general brightness haze.
+  color *= pow(doppler, 2.0);
 
   // Doppler hue shift: forward → blue, backward → red. Subtle tint.
-  float hueShift = clamp((doppler - 1.0) * 0.6, -0.5, 0.5);
-  color.b *= 1.0 + hueShift * 0.3;
-  color.r *= 1.0 - hueShift * 0.2;
+  float hueShift = clamp((doppler - 1.0) * 0.5, -0.4, 0.4);
+  color.b *= 1.0 + hueShift * 0.25;
+  color.r *= 1.0 - hueShift * 0.15;
 
   // System tint: warm at home, cool in alien system. Applied after beaming
   // so the shift affects the final starfield mood.
