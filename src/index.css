@@ -76,18 +76,53 @@ canvas {
   border-left: 2px solid #9aa3ad;
 }
 
-.hud-bottom {
+.hud-drop {
   position: absolute;
   left: 50%;
-  bottom: 32px;
+  top: 56px;
   transform: translateX(-50%);
   width: min(560px, calc(100% - 32px));
-  padding: 16px 18px;
   border: 1px solid currentColor;
-  background: rgba(0, 0, 0, 0.62);
+  background: rgba(0, 0, 0, 0.72);
   backdrop-filter: blur(6px);
   pointer-events: auto;
   line-height: 1.5;
+}
+
+.hud-drop-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 14px;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.hud-drop-header:hover,
+.hud-drop-header:focus-visible {
+  background: rgba(255, 255, 255, 0.04);
+  outline: none;
+}
+
+.hud-drop-title {
+  text-align: left;
+}
+
+.hud-drop-chevron {
+  font-size: 10px;
+  opacity: 0.75;
+}
+
+.hud-drop-body {
+  padding: 4px 16px 16px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .hud-amber  { color: #ffba5a; text-shadow: 0 0 6px rgba(255, 186, 90, 0.35); }
