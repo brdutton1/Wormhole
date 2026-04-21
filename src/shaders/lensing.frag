@@ -33,6 +33,10 @@ uniform float uDiskInner;
 uniform float uDiskOuter;
 uniform float uAccretionSpeed;
 
+// v4 uniforms — relativistic effects + system palette shift.
+uniform vec3  uObserverVel;  // β-scaled observer velocity (|v| ≤ 0.9)
+uniform float uSystemTint;   // 0 = home (warm), 1 = alien (cool)
+
 varying vec3 vWorldPos;
 
 // ---- hashes ----
@@ -181,14 +185,51 @@ void main() {
   float frontFactor = clamp(tClosest / 12.0, 0.0, 1.0);
   vec3 bent = normalize(rayDir + bendDir * deflect * frontFactor);
 
-  // Nebula base — always visible, no deflection needed.
-  vec3 color = nebula(bent);
+  // ---- Relativistic aberration + Doppler beaming ----
+  // Shift the sampling direction per SR aberration formula. Only applied
+  // to starfield/nebula sampling — disk and photon ring are geometric
+  // features tied to the throat's rest frame and should not aberrate.
+  vec3 sampleDir = bent;
+  float doppler = 1.0;
+  float beta = length(uObserverVel);
+  if (beta > 0.001) {
+    beta = min(beta, 0.9);
+    vec3 vhat = uObserverVel / max(length(uObserverVel), 1e-5);
+    float cosT = dot(bent, vhat);
+    // cos θ' = (cos θ + β) / (1 + β cos θ)
+    float newCosT = (cosT + beta) / (1.0 + beta * cosT);
+    float sinT = sqrt(max(1.0 - cosT * cosT, 0.0));
+    float newSinT = sqrt(max(1.0 - newCosT * newCosT, 0.0));
+    vec3 perp = (sinT > 1e-4) ? normalize(bent - vhat * cosT) : vec3(0.0);
+    sampleDir = normalize(vhat * newCosT + perp * newSinT);
+
+    // Doppler factor D = 1 / (γ (1 - β cosθ)). Beaming intensity ∝ D^4.
+    float gamma = 1.0 / sqrt(max(1.0 - beta * beta, 1e-4));
+    doppler = 1.0 / (gamma * (1.0 - beta * cosT));
+  }
+
+  // Nebula base — always visible, sampled along (aberrated) direction.
+  vec3 color = nebula(sampleDir);
 
   // Starfield — 2 Worley layers for depth variety.
   float dLow  = mix(35.0, 80.0, clamp(uStarDensity, 0.0, 1.0));
   float dHigh = dLow * 2.2;
-  color += starLayer(bent, dLow);
-  color += starLayer(bent, dHigh) * 0.6;
+  color += starLayer(sampleDir, dLow);
+  color += starLayer(sampleDir, dHigh) * 0.6;
+
+  // Relativistic beaming: pile intensity into the forward cone, thin out behind.
+  color *= pow(doppler, 4.0);
+
+  // Doppler hue shift: forward → blue, backward → red. Subtle tint.
+  float hueShift = clamp((doppler - 1.0) * 0.6, -0.5, 0.5);
+  color.b *= 1.0 + hueShift * 0.3;
+  color.r *= 1.0 - hueShift * 0.2;
+
+  // System tint: warm at home, cool in alien system. Applied after beaming
+  // so the shift affects the final starfield mood.
+  vec3 homeTint  = vec3(1.0, 0.98, 0.95);
+  vec3 alienTint = vec3(0.82, 0.92, 1.15);
+  color *= mix(homeTint, alienTint, clamp(uSystemTint, 0.0, 1.0));
 
   // Photon ring — narrow bright gaussian at b = 1.5·rs.
   // Plus faint secondary "photon sub-ring" slightly inside it.

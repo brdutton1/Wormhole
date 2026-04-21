@@ -22,3 +22,124 @@ canvas {
   display: block;
   touch-action: none;
 }
+
+/* ---- Explorer HUD ---- */
+
+.hud-root {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  z-index: 10;
+}
+
+.hud-tidal {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  padding: 6px 10px;
+  border: 1px solid currentColor;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  text-transform: uppercase;
+}
+
+.hud-tidal-nominal {
+  color: #6bd08a;
+  text-shadow: 0 0 6px rgba(107, 208, 138, 0.4);
+}
+.hud-tidal-warning {
+  color: #ffb347;
+  text-shadow: 0 0 8px rgba(255, 179, 71, 0.55);
+}
+.hud-tidal-critical {
+  color: #ff5c5c;
+  text-shadow: 0 0 10px rgba(255, 92, 92, 0.8);
+  animation: hud-flicker 0.6s steps(4, end) infinite;
+}
+
+@keyframes hud-flicker {
+  0%, 40%, 60%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.hud-phase {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  padding: 6px 10px;
+  color: #9aa3ad;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  border-left: 2px solid #9aa3ad;
+}
+
+.hud-bottom {
+  position: absolute;
+  left: 50%;
+  bottom: 32px;
+  transform: translateX(-50%);
+  width: min(560px, calc(100% - 32px));
+  padding: 16px 18px;
+  border: 1px solid currentColor;
+  background: rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(6px);
+  pointer-events: auto;
+  line-height: 1.5;
+}
+
+.hud-amber  { color: #ffba5a; text-shadow: 0 0 6px rgba(255, 186, 90, 0.35); }
+.hud-white  { color: #f0f0f0; text-shadow: 0 0 6px rgba(240, 240, 240, 0.25); }
+.hud-cyan   { color: #7ad6e8; text-shadow: 0 0 6px rgba(122, 214, 232, 0.35); }
+
+.hud-flavor {
+  margin: 0 0 10px 0;
+}
+.hud-dim {
+  opacity: 0.6;
+}
+.hud-center {
+  text-align: center;
+}
+
+.hud-button-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.hud-button {
+  font-family: inherit;
+  font-size: 14px;
+  letter-spacing: 0.15em;
+  padding: 12px 22px;
+  min-height: 44px;
+  min-width: 120px;
+  cursor: pointer;
+  background: transparent;
+  color: inherit;
+  border: 1px solid currentColor;
+  text-transform: uppercase;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.hud-button:hover,
+.hud-button:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 12px currentColor;
+  outline: none;
+}
+
+.hud-engage {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  animation: hud-pulse 2.2s ease-in-out infinite;
+}
+
+@keyframes hud-pulse {
+  0%, 100% { box-shadow: 0 0 4px rgba(255, 186, 90, 0.3); }
+  50% { box-shadow: 0 0 18px rgba(255, 186, 90, 0.9); }
+}

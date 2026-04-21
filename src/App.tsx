@@ -1,11 +1,18 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useControls, folder } from 'leva'
 import WormholeScene from './components/WormholeScene'
+import ExplorerHUD, { type Phase } from './components/ExplorerHUD'
 import { AudioEngine } from './audio/AudioEngine'
 
+const TRAVERSAL_MS = 6100
+
 export default function App() {
-  // Primary controls — these five are the CLAUDE.md-defined leva surface.
-  // The "Tuning" folder exposes the rest of the shader uniforms.
+  // Phase state drives the narrative. The leva `traversalMode` is kept
+  // as a debug override so we can still force the traversal shader/camera.
+  const [phase, setPhase] = useState<Phase>('approach')
+  const [hudDismissed, setHudDismissed] = useState(false)
+  const [proximity, setProximity] = useState(1)
+
   const [values, set] = useControls(() => ({
     throatRadius: { value: 1.0, min: 0.3, max: 3.0, step: 0.01 },
     lensingStrength: { value: 0.65, min: 0.0, max: 3.0, step: 0.01 },
@@ -25,53 +32,74 @@ export default function App() {
     ),
   }))
 
-  // Audio: init on first enable, dispose on disable.
+  // Audio.
   useEffect(() => {
-    let mounted = true
     if (values.audioEnabled) {
-      AudioEngine.init().catch((err) => {
-        console.warn('Audio init failed:', err)
-      })
+      AudioEngine.init().catch((err) => console.warn('Audio init failed:', err))
     } else if (AudioEngine.isStarted()) {
       AudioEngine.dispose()
     }
-    return () => {
-      mounted = false
-      void mounted
-    }
   }, [values.audioEnabled])
-
-  // Clean up on unmount.
   useEffect(() => () => AudioEngine.dispose(), [])
 
-  // Proximity callback — throttle to avoid spamming Tone.js every frame.
+  // Throttled proximity → audio + HUD tidal readout.
   const lastProximityAt = useRef(0)
   const onProximity = useCallback((norm: number) => {
+    setProximity(norm)
     const now = performance.now()
     if (now - lastProximityAt.current < 50) return
     lastProximityAt.current = now
     if (AudioEngine.isStarted()) AudioEngine.setProximity(norm)
   }, [])
 
-  // When traversal completes, flip the toggle back off.
+  // Phase transitions.
+  const engage = useCallback(() => {
+    if (phase !== 'approach') return
+    setHudDismissed(false)
+    setPhase('traversal')
+    setTimeout(() => setPhase('arrival'), TRAVERSAL_MS)
+  }, [phase])
+
+  const returnHome = useCallback(() => {
+    if (phase !== 'arrival') return
+    setHudDismissed(false)
+    setPhase('traversal')
+    setTimeout(() => setPhase('approach'), TRAVERSAL_MS)
+  }, [phase])
+
+  const stay = useCallback(() => setHudDismissed(true), [])
+
+  // Leva debug override: if user flips `traversalMode` on manually,
+  // we honor it but don't corrupt phase state.
   const onTraversalEnd = useCallback(() => {
-    set({ traversalMode: false })
-  }, [set])
+    if (values.traversalMode) set({ traversalMode: false })
+  }, [set, values.traversalMode])
 
   return (
-    <WormholeScene
-      throatRadius={values.throatRadius}
-      lensingStrength={values.lensingStrength}
-      accretionSpeed={values.accretionSpeed}
-      traversalMode={values.traversalMode}
-      bloomIntensity={values.bloomIntensity}
-      chromaticOffset={values.chromaticOffset}
-      starDensity={values.starDensity}
-      photonRingIntensity={values.photonRingIntensity}
-      diskLensing={values.diskLensing}
-      grainIntensity={values.grainIntensity}
-      onProximity={onProximity}
-      onTraversalEnd={onTraversalEnd}
-    />
+    <>
+      <WormholeScene
+        throatRadius={values.throatRadius}
+        lensingStrength={values.lensingStrength}
+        accretionSpeed={values.accretionSpeed}
+        phase={phase}
+        traversalMode={values.traversalMode}
+        bloomIntensity={values.bloomIntensity}
+        chromaticOffset={values.chromaticOffset}
+        starDensity={values.starDensity}
+        photonRingIntensity={values.photonRingIntensity}
+        diskLensing={values.diskLensing}
+        grainIntensity={values.grainIntensity}
+        onProximity={onProximity}
+        onTraversalEnd={onTraversalEnd}
+      />
+      <ExplorerHUD
+        phase={phase}
+        proximity={proximity}
+        hudDismissed={hudDismissed}
+        onEngage={engage}
+        onReturn={returnHome}
+        onStay={stay}
+      />
+    </>
   )
 }
